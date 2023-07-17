@@ -1,0 +1,161 @@
+---
+title: "Practical DSB03_ Unsupervised Machine Learning in R"
+author: "Jason Okwuonu"
+date: "2022-10-17"
+output: word_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+setwd("C:\\Users\\smart\\Documents\\Bioinformatics\\Data Science for bioinformatics\\Week 11")
+```
+
+### Loading in the excel file as a R dataframe
+
+```{r}
+library(readxl)
+Table1 <- read_excel("Table1.xlsx")
+
+View(Table1)
+```
+
+```{r}
+# Assigning the dataframe to a variable 
+df <- Table1
+
+df
+```
+Next I calculated the distances metrics of the data from using the dist() function 
+
+```{r}
+#calculating manhattan distances 
+dist(df, method = "manhattan")
+```
+
+```{r}
+#calculating euclidean distances 
+dist(df, method = "euclidean")
+```
+Question: Explain the differences observed in the Manhattan and Euclidean distances
+
+The Manhattan distances are much larger than the euclidian distances. This is because euclidean distance measures the shortest distance between two points where as the manhattan distances calculates the distance between both points if a grid like path is followed. 
+
+
+### Clustering 
+
+first a matrix was created
+```{r}
+y <- matrix(rnorm(50), 10, 5, dimnames=list(paste("g", 1:10, sep=""), paste("t", 1:5, sep="")))
+y
+```
+
+Afterwards the data was scaled so that the values can be comparable. This was done by the scale function which scales numeric matrices column-wise-
+```{r}
+#The code transposes the matrix and then scaled using standard deviation 
+scale(t(y)); yscaled <- t(scale(t(y))); apply(yscaled, 1, sd)
+
+
+```
+
+### Calculating different distance matrices
+
+```{r}
+#calculating euclidean distances 
+dist(y, method = "euclidean")
+```
+
+```{r}
+#calculating manhattan maximum distances 
+dist(y, method = "maximum")
+```
+
+```{r}
+#calculating manhattan distances 
+dist(y, method = "manhattan")
+```
+
+```{r}
+#calculating canberra distances 
+dist(y, method = "canberra")
+```
+
+
+```{r}
+#calculating binary distances 
+dist(y, method = "binary")
+```
+
+Question: Explain why the values from the different distance matrices differ
+
+The values differ between the four distance matrices is because the distance metrics used on each one calculate distance differently. For example, despite both being named manhattan, manhattan maximum calculates the maximum distance between the two component of x and y whereas manhattan only. distance metrices like euclidean and manhatthan can be used in a 2 dimentsional space where as minkowski can only be used in a 3 dimensional space. Furthermore binary converts vectors into 1 and 0 and calulate distance on the proportions of 1s found. 
+
+
+After calculating the distance metric of the matrix, the correlation coeffieicent was calulated with euclidean distances.
+```{r}
+c <- cor(t(y), method="spearman")
+d <- as.dist(1-c); d
+```
+
+The cluster was then created using the hclust() function
+```{r}
+hr <- hclust(d, method = "complete", members=NULL)
+
+names(hr)
+```
+
+The code below plots the HC tree. the argument hang -1 puts the leaves on one line
+```{r}
+par(mfrow = c(1, 2))
+plot(hr, hang = 0.1) 
+plot(hr, hang = -1)
+```
+
+
+The code below plots the tree horizontally through transforming the dendrogram object
+```{r}
+plot(as.dendrogram(hr), edgePar=list(col=3, lwd=4), horiz=T)
+
+```
+
+
+```{r}
+unclass(hr) # Prints the full content of the hclust object.
+```
+
+
+```{r}
+str(as.dendrogram(hr)) # Prints dendrogram structure as text.
+```
+
+
+```{r}
+hr$labels[hr$order] # Prints the row labels in the order they appear in the tree.
+```
+
+```{r}
+par(mfrow=c(1,2)); hrd1 <- as.dendrogram(hr); plot(hrd1); hrd2 <- reorder(hrd1, sample(1:10));
+plot(hrd2); labels(hrd1); labels(hrd2) # Example to reorder a dendrogram and print out its labels.
+```
+
+
+```{r}
+#installing CTC
+#BiocManager::install("ctc")
+```
+
+Finally the package ctc was installed and loaded. the hclust object was converted into a Newick tree file format so it can be used in other programs. 
+```{r}
+library(ctc)
+hc2Newick(hr)
+
+```
+
+```{r}
+# exporting the created matrix
+write.csv(y, "Table2.csv")
+```
+
